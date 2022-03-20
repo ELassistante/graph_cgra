@@ -11,8 +11,6 @@ enum Format {P_TYPE, R_TYPE} ;
 
 vector<Pe*>current (G_SIZE) ;
 vector<bool>cur_act (G_SIZE) ;
-vector<Pe*> past (G_SIZE);
-vector<bool>past_act (G_SIZE) ;
 
 void hex_to_bin (string code,unsigned int& bin_code) ;
 void conv_text(unsigned int text_bin, string& text_code, size_t cnt) ;
@@ -85,19 +83,18 @@ int main () {
         }
         hex_to_bin(code, code_bin) ;
         conv_text(code_bin, text_code, (i-1)%16) ;
-  /*      if (i%16 == 0){           
+            if (i%16 == 0){           
             graph << "Time : " << time << endl ;
             for (size_t j(0); j < G_SIZE ; ++j) {
-                if(cur_act[j])  graph << "PE " << j << " : " << connection(current[j]) << endl ;
+                if(cur_act[j])  graph << "PE_" << j << " : " << connection(current[j]) << endl ;
             }
             graph << "-------" << endl << endl ;
-            past = current ;
             for (size_t j(0); j < G_SIZE ; ++j) {
                 delete current[j] ;
                 cur_act[j] = false ;
             }
             time++ ;
-        } */
+        }
         if ((i-1)%16 == 0) decode << "------" << endl ;
         decode << "PE " <<(i-1)%16 << ": " << text_code << endl ;
         text_code = "" ;
@@ -113,7 +110,6 @@ void hex_to_bin (string code,unsigned int& bin_code) {
     if (code.size() == 7) code.insert(0,"0") ;
     std::istringstream converter(code);
     converter >> std::hex >> bin_code;
-    cout << bin_code << endl ;
 }
 
 void conv_text(unsigned int text_bin, string& text_code, size_t cnt) {
@@ -207,21 +203,30 @@ void conv_text(unsigned int text_bin, string& text_code, size_t cnt) {
                 temp >>= 13 ;
                 text_code += " | AB : " + to_string(temp) ;
                 break ;
-            }
-        case 9 :
-        if (form == R_TYPE) {
-            mask = 0b1 ;
-            mask <<= 12 ;
-            temp = text_bin & mask ;
-            temp >>= 12 ;
-            text_code += " | DB : " + to_string(temp) ;
-            break ;
-        }
-        case 10 :
-            mask = 0xfff ;
+            } else if (form == P_TYPE){
+                mask = 0xfff ;
             temp = text_bin & mask ;
             text_code += " | Im : " + to_string(temp) ;
+            if(cur_act[cnt]) current[cnt]->set_im(temp) ;
             break ;
+            }
+        case 9 :
+            if (form == R_TYPE) {
+                mask = 0b1 ;
+                mask <<= 12 ;
+                temp = text_bin & mask ;
+                temp >>= 12 ;
+                text_code += " | DB : " + to_string(temp) ;
+                break ;
+            } else break ;
+        case 10 :
+            if (form == R_TYPE) {
+                mask = 0xfff ;
+                temp = text_bin & mask ;
+                text_code += " | Im : " + to_string(temp) ;
+                if(cur_act[cnt]) current[cnt]->set_im(temp) ;
+                break ;
+            }
         }
     }
 }
@@ -408,26 +413,26 @@ string connection(Pe* p) {
         if (p->get_connect()[i]) {
             switch (i) {
                 case 0 :
-                txt += " Reg " ;
+                txt += " Reg |" ;
                 break ;
 
                 case 1 :
                 case 2 :
                 case 3 :
                 case 4 :
-                txt += " PE " + to_string(p->get_voisins()[i])  ;
+                txt += " PE_" + to_string(p->get_voisins()[i]) + " |"  ;
                 break ;
 
                 case 5 :
-                txt += " DB " ;
+                txt += " DB |" ;
                 break ;
 
                 case 6 :
-                txt += " Im " ;
+                txt += " Im = " + to_string(p->get_im()) + " |";
                 break ;
 
                 case 7 :
-                txt += " Self " ;
+                txt += " Self |" ;
                 break ;
 
                 default : 
