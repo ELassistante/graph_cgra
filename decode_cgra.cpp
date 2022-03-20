@@ -29,6 +29,9 @@ int main () {
     unsigned int code_bin (0b0) ;
     int i(0) ;
     int time(0) ;
+    size_t ctp (0) ;
+    size_t ctk (0) ;
+    size_t cte(0) ;
     ifstream instr ;
     ofstream decode ;
     ofstream graph ;
@@ -59,7 +62,12 @@ int main () {
                 graph << "*******KERNEl*********" << endl ;
                 continue ;
             } 
-            else code = text.substr(3,text.size() - 1) ;
+            else {
+                if (ctp < 100) code = text.substr(3,text.size() - 1) ;
+                else if (ctp < 1000) code = text.substr(4,text.size() - 1) ;
+                else if (ctp < 10000) code = text.substr(5,text.size() - 1) ;
+            }
+            ctp++ ;
             break ;
 
             case KERNEL :
@@ -70,11 +78,19 @@ int main () {
                 graph << "*******EPILOG*********" << endl ;
                 continue ;
             } 
-            else code = text.substr(3,text.size() - 1) ;
+            else {
+                if (ctk < 100) code = text.substr(3,text.size() - 1) ;
+                else if (ctk < 1000) code = text.substr(4,text.size() - 1) ;
+                else if (ctk < 10000) code = text.substr(5,text.size() - 1) ;
+            }
+            ctk++ ;
             break ;
 
             case EPILOG :
-            code = text.substr(3,text.size() - 1) ;
+            if (cte < 100) code = text.substr(3,text.size() - 1) ;
+            else if (cte < 1000) code = text.substr(4,text.size() - 1) ;
+            else if (cte < 10000) code = text.substr(5,text.size() - 1) ;
+            cte++ ;
             break ;
 
             default :
