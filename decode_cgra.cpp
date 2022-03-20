@@ -61,13 +61,14 @@ int main () {
                 decode << "*******KERNEl*********" << endl ;
                 graph << "*******KERNEl*********" << endl ;
                 continue ;
-            } 
-            else {
+            }
+          //  code = text.substr(3,text.size() - 1) ; 
+           else {
                 if (ctp < 100) code = text.substr(3,text.size() - 1) ;
                 else if (ctp < 1000) code = text.substr(4,text.size() - 1) ;
                 else if (ctp < 10000) code = text.substr(5,text.size() - 1) ;
             }
-            ctp++ ;
+            ctp++ ; 
             break ;
 
             case KERNEL :
@@ -78,28 +79,33 @@ int main () {
                 graph << "*******EPILOG*********" << endl ;
                 continue ;
             } 
+     //       code = text.substr(3,text.size() - 1) ;
             else {
                 if (ctk < 100) code = text.substr(3,text.size() - 1) ;
                 else if (ctk < 1000) code = text.substr(4,text.size() - 1) ;
                 else if (ctk < 10000) code = text.substr(5,text.size() - 1) ;
             }
-            ctk++ ;
+            ctk++ ; 
             break ;
 
             case EPILOG :
+        //    code = text.substr(3,text.size() - 1) ;
             if (cte < 100) code = text.substr(3,text.size() - 1) ;
             else if (cte < 1000) code = text.substr(4,text.size() - 1) ;
             else if (cte < 10000) code = text.substr(5,text.size() - 1) ;
-            cte++ ;
+            cte++ ; 
             break ;
 
             default :
             break ;
 
         }
+        cout << i-1 << endl ;
         hex_to_bin(code, code_bin) ;
+        cout << i-1 << endl ;
         conv_text(code_bin, text_code, (i-1)%16) ;
-            if (i%16 == 0){           
+        cout << i-1 << endl ;
+        if (i%16 == 0){           
             graph << "Time : " << time << endl ;
             for (size_t j(0); j < G_SIZE ; ++j) {
                 if(cur_act[j])  graph << "PE_" << j << " : " << connection(current[j]) << endl ;
@@ -111,6 +117,7 @@ int main () {
             }
             time++ ;
         }
+        cout << i-1 << endl ;
         if ((i-1)%16 == 0) decode << "------" << endl ;
         decode << "PE " <<(i-1)%16 << ": " << text_code << endl ;
         text_code = "" ;
