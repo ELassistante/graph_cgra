@@ -11,7 +11,7 @@ class Pe {
     private :
     size_t node ;
     int im ;
-    vector<size_t> voisins ;    //Reg-Left-Right-Top-Down-DB-Im-Self
+    vector<size_t> neightbourgs ;    //Reg-Left-Right-Top-Down-DB-Im-Self
     vector<bool> connect;
 
     public :
@@ -19,7 +19,7 @@ class Pe {
 
     size_t get_node () ;
     int get_im() ;
-    vector<size_t> get_voisins () ;
+    vector<size_t> get_nbrg () ;
     vector<bool> get_connect() ;
 
     void set_node (size_t node) ;

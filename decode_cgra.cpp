@@ -1,3 +1,13 @@
+/*
+Clement DUBOS
+28.03.22
+DECODE CGRA
+decode_cgra.cpp
+Decoder for "cgra_instructions.txt", return to txt files :
+-graph.txt => connections of all PEs with minimum informations about connections
+-decode.txt => decoding of every instructions with all the informations
+*/
+
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -6,40 +16,44 @@
 
 using namespace std ;
 
-enum State {NO,PROLOG,KERNEL,EPILOG} ;
-enum Format {P_TYPE, R_TYPE} ;
+enum State {NO,PROLOG,KERNEL,EPILOG} ;      //Different states of the script
+enum Format {P_TYPE, R_TYPE} ;              //Different instruction formats
 
-vector<Pe*>current (G_SIZE) ;
-vector<bool>cur_act (G_SIZE) ;
+vector<Pe*>current (G_SIZE) ;       //Stock the state of each active PE at each iteration
+vector<bool>cur_act (G_SIZE) ;      //Tells which PE is active at each iteration
 
-void hex_to_bin (string code,unsigned int& bin_code) ;
-void conv_text(unsigned int text_bin, string& text_code, size_t cnt) ;
-void connect_graph (size_t cnt, unsigned int dir) ;
-string to_op (unsigned int num, Format form) ;
-string to_form (unsigned int num, Format& form) ;
-string to_mux (unsigned int num) ;
-string connection(Pe* p) ;
+void hex_to_bin (string code,unsigned int& bin_code) ;      //Convert a string of hexadecimal number to a binary number
+void conv_text(unsigned int text_bin, string& text_code, size_t cnt) ;  //Convert the binary code to the instructions
+void connect_graph (size_t cnt, unsigned int dir) ;     //Update the connections of the PE cnt to the PE dir
+string to_op (unsigned int num, Format form) ;          //Transform a number to opcode
+string to_form (unsigned int num, Format& form) ;       //Transform a boolean to the instruction format (P or R)
+string to_mux (unsigned int num) ;      //Convert a number to the entry enabled by the multiplexer
+string connection(Pe* p) ;        //Write the connections of the PE
 
 int main () {
 
     State etat = NO ;
-    string text ;
-    string code ;
-    string text_code("") ;
-    unsigned int code_bin (0b0) ;
-    int i(0) ;
-    int time(0) ;
+    string text("") ;       //used to stock each line
+    string code("") ;       //used to extract the important part of the line
+    string text_code("") ;      //used to store the converted instruction
+    unsigned int code_bin (0b0) ;   //used to stock the binary instruction
+    int i(0) ;      //counter
+    int time(0) ;   //time of the execution
+    size_t ctp (0) ;    //counter for prolog
+    size_t ctk (0) ;    //counter for kernel
+    size_t cte(0) ;     //counter for epilog
     ifstream instr ;
     ofstream decode ;
     ofstream graph ;
+
     instr.open("cgra_instructions.txt") ;
     decode.open("decode.txt") ;
     graph.open("graph.txt") ;
-
+//Read each line in cgra_instructions.txt
     while(getline(instr >> ws, text)) {
         i++ ;
         switch(etat) {
-            case NO :
+            case NO :       //wait for prolog line
             if (text == "*******PROLOG*********"){
                 etat = PROLOG ;
                 i = 0 ; time = 0 ;
@@ -58,8 +72,13 @@ int main () {
                 decode << "*******KERNEl*********" << endl ;
                 graph << "*******KERNEl*********" << endl ;
                 continue ;
-            } 
-            else code = text.substr(3,text.size() - 1) ;
+            }
+           else {
+                if (ctp < 100) code = text.substr(3,text.size() - 1) ;  //deals with line number with multiple characters
+                else if (ctp < 1000) code = text.substr(4,text.size() - 1) ;
+                else if (ctp < 10000) code = text.substr(5,text.size() - 1) ;
+            }
+            ctp++ ; 
             break ;
 
             case KERNEL :
@@ -70,11 +89,19 @@ int main () {
                 graph << "*******EPILOG*********" << endl ;
                 continue ;
             } 
-            else code = text.substr(3,text.size() - 1) ;
+            else {
+                if (ctk < 100) code = text.substr(3,text.size() - 1) ;  //deals with line number with multiple characters
+                else if (ctk < 1000) code = text.substr(4,text.size() - 1) ;
+                else if (ctk < 10000) code = text.substr(5,text.size() - 1) ;
+            }
+            ctk++ ; 
             break ;
 
             case EPILOG :
-            code = text.substr(3,text.size() - 1) ;
+            if (cte < 100) code = text.substr(3,text.size() - 1) ;      //deals with line number with multiple characters
+            else if (cte < 1000) code = text.substr(4,text.size() - 1) ;
+            else if (cte < 10000) code = text.substr(5,text.size() - 1) ;
+            cte++ ; 
             break ;
 
             default :
@@ -83,7 +110,7 @@ int main () {
         }
         hex_to_bin(code, code_bin) ;
         conv_text(code_bin, text_code, (i-1)%16) ;
-            if (i%16 == 0){           
+        if (i%16 == 0){           
             graph << "Time : " << time << endl ;
             for (size_t j(0); j < G_SIZE ; ++j) {
                 if(cur_act[j])  graph << "PE_" << j << " : " << connection(current[j]) << endl ;
@@ -116,7 +143,8 @@ void conv_text(unsigned int text_bin, string& text_code, size_t cnt) {
     unsigned int temp(0) ;
     unsigned int mask = 0x0 ;
     Format form = R_TYPE ;
-    for (int i(0); i < 11 ; ++i ) {
+//extract each information from binary code
+    for (int i(0); i < 11 ; ++i ) { 
         switch(i) {
         case 0:
             mask = 0b1 ;
@@ -409,7 +437,7 @@ void connect_graph (size_t cnt, unsigned int dir)  {
 
 string connection(Pe* p) {
     string txt ("");
-    for (size_t i(0); i < p->get_voisins().size() ; ++i) {
+    for (size_t i(0); i < p->get_nbrg().size() ; ++i) {
         if (p->get_connect()[i]) {
             switch (i) {
                 case 0 :
@@ -420,7 +448,7 @@ string connection(Pe* p) {
                 case 2 :
                 case 3 :
                 case 4 :
-                txt += " PE_" + to_string(p->get_voisins()[i]) + " |"  ;
+                txt += " PE_" + to_string(p->get_nbrg()[i]) + " |"  ;
                 break ;
 
                 case 5 :
