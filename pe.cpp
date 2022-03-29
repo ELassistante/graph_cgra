@@ -3,9 +3,9 @@
 using namespace std ;
 
 Pe::Pe(size_t node) : node(node) {
-    for (size_t i(0); i < 8 ; ++i) {
-        neightbourgs.push_back(0); 
-        connect.push_back(false);
+    for (size_t i(0); i < connect.size() ; ++i) {
+        neightbourgs[i] = 0; 
+        connect[i] = false;
     }
     switch(node) {
         case 0 :
@@ -77,19 +77,25 @@ Pe::Pe(size_t node) : node(node) {
     }
 }
 
+//-----------------------------------
+//GETTERS
+//-----------------------------------
 size_t Pe::get_node () {
     return this->node ;
 }
 int Pe::get_im() {
     return this->im ;
 }
-vector<size_t> Pe::get_nbrg () {
+array<size_t,8> Pe::get_nbrg () {
     return this->neightbourgs ;
 }
-vector<bool> Pe::get_connect() {
+array<bool,8> Pe::get_connect() {
     return this->connect ;
 }
 
+//-----------------------------------
+//SETTERS
+//-----------------------------------
 void Pe::set_node (size_t node) {
     this->node = node ;
 }

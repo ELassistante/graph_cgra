@@ -19,8 +19,8 @@ using namespace std ;
 enum State {NO,PROLOG,KERNEL,EPILOG} ;      //Different states of the script
 enum Format {P_TYPE, R_TYPE} ;              //Different instruction formats
 
-vector<Pe*>current (G_SIZE) ;       //Stock the state of each active PE at each iteration
-vector<bool>cur_act (G_SIZE) ;      //Tells which PE is active at each iteration
+array<Pe*,G_SIZE>current ;       //Stock the state of each active PE at each iteration
+array<bool,G_SIZE>cur_act  ;      //Tells which PE is active at each iteration
 
 void hex_to_bin (string code,unsigned int& bin_code) ;      //Convert a string of hexadecimal number to a binary number
 void conv_text(unsigned int text_bin, string& text_code, size_t cnt) ;  //Convert the binary code to the instructions
@@ -73,7 +73,7 @@ int main () {
                 graph << "*******KERNEl*********" << endl ;
                 continue ;
             }
-           else {
+            else {
                 if (ctp < 100) code = text.substr(3,text.size() - 1) ;  //deals with line number with multiple characters
                 else if (ctp < 1000) code = text.substr(4,text.size() - 1) ;
                 else if (ctp < 10000) code = text.substr(5,text.size() - 1) ;
@@ -105,25 +105,26 @@ int main () {
             break ;
 
             default :
+            decode << "Error state" << endl ;
             break ;
 
         }
         hex_to_bin(code, code_bin) ;
         conv_text(code_bin, text_code, (i-1)%16) ;
-        if (i%16 == 0){           
+        if (i%16 == 0){                 //Write information for each time iterations    
             graph << "Time : " << time << endl ;
             for (size_t j(0); j < G_SIZE ; ++j) {
                 if(cur_act[j])  graph << "PE_" << j << " : " << connection(current[j]) << endl ;
             }
             graph << "-------" << endl << endl ;
             for (size_t j(0); j < G_SIZE ; ++j) {
-                delete current[j] ;
+                if(cur_act[j]) delete current[j] ;
                 cur_act[j] = false ;
             }
             time++ ;
         }
         if ((i-1)%16 == 0) decode << "------" << endl ;
-        decode << "PE " <<(i-1)%16 << ": " << text_code << endl ;
+        decode << "PE_" <<(i-1)%16 << ": " << text_code << endl ;
         text_code = "" ;
         code_bin = 0 ;
 
@@ -254,7 +255,10 @@ void conv_text(unsigned int text_bin, string& text_code, size_t cnt) {
                 text_code += " | Im : " + to_string(temp) ;
                 if(cur_act[cnt]) current[cnt]->set_im(temp) ;
                 break ;
-            }
+            } else break ;
+        default :
+        text_code += "Error bin" ;
+        exit(0) ;
         }
     }
 }
@@ -328,7 +332,7 @@ string to_op (unsigned int num, Format form) {
             break ;    
 
             default : 
-            op = "error" ;
+            op = "Error R_type" ;
             break ;
         }
     } else if (form == P_TYPE) {
@@ -370,7 +374,7 @@ string to_op (unsigned int num, Format form) {
             break ;
 
             default :
-            op = "ERROR" ;
+            op = "Error P_Type" ;
             break ;
         }
     }
@@ -379,11 +383,11 @@ string to_op (unsigned int num, Format form) {
 }
 
 string to_form(unsigned int num, Format& form) {
-    if (num == 1){
+    if (num == 0b1){
         form = P_TYPE; 
         return "P-type" ;
     }
-    else if (num == 0) {
+    else if (num == 0b0) {
         form = R_TYPE ;
         return "R-type" ;
     }
@@ -425,14 +429,14 @@ string to_mux (unsigned int num) {
         break ;
 
         default :
-        mux = "error" ;
+        mux = "Error mux" ;
         break ;
     }
     return mux ;
 }
 
 void connect_graph (size_t cnt, unsigned int dir)  {
-    current[cnt]->set_connect(dir) ;
+    if(cur_act[cnt])current[cnt]->set_connect(dir) ;
 }
 
 string connection(Pe* p) {
@@ -464,7 +468,7 @@ string connection(Pe* p) {
                 break ;
 
                 default : 
-                txt += " Error " ;
+                txt += " Error connections " ;
                 break ;
             }
         }
